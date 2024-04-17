@@ -1,0 +1,10 @@
+{
+  "id": 7642,
+  "name": "carta1",
+  "color": "Blanco",
+  "manaCost": 1,
+  "cardType": "Criatura",
+  "rarity": "Comun",
+  "rulesText": "Some rules text",
+  "marketValue": 0.01
+}

@@ -1,11 +1,19 @@
 import yargs from 'yargs';
-import { Card } from './Card.js';
-import { hideBin } from 'yargs/helpers';
-import { CardCollection } from './User.js'; 
+import { CardCollection } from './User.js';
 import { Color } from './EnumerationColor.js';
 import { LineType } from './EnumerationLineType.js';
 import { Rarity } from './EnumerationRarity.js';
+import net from 'net';
 
+// Conectar al servidor el cliente
+const client = net.connect({ port: 60300 });
+
+// Escuchar datos del servidor
+client.on('data', data => {
+  console.log(data.toString());
+});
+
+// Definir comandos y opciones utilizando yargs
 /**
  * Comando para gestionar la colección de cartas
  * Se pueden añadir, listar, actualizar, leer y eliminar cartas de la colección
@@ -17,8 +25,8 @@ import { Rarity } from './EnumerationRarity.js';
  * - remove: Elimina un usuario de la colección
  * Para más información sobre los comandos, ejecutar el comando --help
  */
-yargs(hideBin(process.argv))
-	/**
+yargs(process.argv.slice(2))
+  /**
    * Comando para añadir un nuevo usuario a la colección
    * Por parámetros se deben indicar el nombre del usuario, el ID, el nombre, 
    * el coste de mana, el color, el tipo de línea, la rareza, el texto de reglas y el valor de mercado.
@@ -48,14 +56,14 @@ yargs(hideBin(process.argv))
       rarity: { describe: 'Rareza del usuario', demandOption: true, type: 'string', choices: Object.values(Rarity) },
       rulesText: { describe: 'Texto de reglas del usuario', demandOption: true, type: 'string' },
       power: { describe: 'Poder del usuario', type: 'array', default: [] },
-			toughness: { describe: 'Resistencia del usuario', type: 'array', default: [] },
+      toughness: { describe: 'Resistencia del usuario', type: 'array', default: [] },
       loyaltyMarks: { describe: 'Marcas de lealtad del usuario', type: 'number' },
       marketValue: { describe: 'Valor de mercado del usuario', demandOption: true, type: 'number' }
     },
-    // esto es lo que se ejecuta cuando se llama al comando
-    handler(argv) {
+    // esto se ejecuta cuando se llama al comando
+    handler: argv => {
       const collection = new CardCollection(argv.user);
-      const user: Card = {
+      const user = {
         id: argv.id,
         name: argv.name,
         manaCost: argv.manaCost,
@@ -64,14 +72,16 @@ yargs(hideBin(process.argv))
         rarity: argv.rarity,
         rulesText: argv.rulesText,
         power: argv.power,
-				toughness: argv.toughness,
+        toughness: argv.toughness,
         loyalty: argv.loyaltyMarks,
         marketValue: argv.marketValue
       };
       collection.addCard(user);
+      const data = JSON.stringify({ action: 'add', user: argv.user, card: user, close: 'CLOSED' });
+      client.write(data);
     }
   })
-	/**
+  /**
    * Comando para listar todos los usuarios de la colección
    * Por parámetros se debe indicar el nombre del usuario y se listan todos los usuarios de la colección
    * @param user: string - Nombre del usuario
@@ -81,17 +91,16 @@ yargs(hideBin(process.argv))
     command: 'list',
     describe: 'Lista todos los usuarios de la colección',
     builder: {
-      user: { describe: 'Nombre del usuario', 
-      demandOption: true, 
-      type: 'string' }
+      user: { describe: 'Nombre del usuario', demandOption: true, type: 'string' }
     },
-    // esto es lo que se ejecuta cuando se llama al comando
-    handler(argv) {
+    handler: argv => {
       const collection = new CardCollection(argv.user);
       collection.listCards();
+      const data = JSON.stringify({ action: 'list', user: argv.user, close: 'CLOSED' });
+      client.write(data);
     }
   })
-	/**
+  /**
    * Comando para actualizar un usuario de la colección
    * Por parámetros se deben indicar el nombre del usuario, el ID y los campos a actualizar
    * @param user: string - Nombre del usuario
@@ -120,14 +129,13 @@ yargs(hideBin(process.argv))
       rarity: { describe: 'Rareza del usuario', type: 'string', choices: Object.values(Rarity) },
       rulesText: { describe: 'Texto de reglas del usuario', type: 'string' },
       power: { describe: 'Poder  del usuario', type: 'array', default: [] },
-			toughness: { describe: 'Resistencia del usuario', type: 'array', default: [] },
+      toughness: { describe: 'Resistencia del usuario', type: 'array', default: [] },
       loyaltyMarks: { describe: 'Marcas de lealtad del usuario', type: 'number' },
       marketValue: { describe: 'Valor de mercado del usuario', type: 'number' }
     },
-    // esto se ejecuta cuando se llama al comando
-    handler(argv) {
+    handler: argv => {
       const collection = new CardCollection(argv.user);
-      const user: Card = {
+      const user = {
         id: argv.id,
         name: argv.name,
         manaCost: argv.manaCost,
@@ -136,14 +144,16 @@ yargs(hideBin(process.argv))
         rarity: argv.rarity,
         rulesText: argv.rulesText,
         power: argv.power,
-				toughness: argv.toughness,
+        toughness: argv.toughness,
         loyalty: argv.loyaltyMarks,
         marketValue: argv.marketValue
       };
       collection.updateCard(user);
+      const data = JSON.stringify({ action: 'update', user: argv.user, card: user, close: 'CLOSED' });
+      client.write(data);
     }
-  }) 
-	/**
+  })
+  /**
    * Comando para leer un usuario de la colección
    * Por parámetros se deben indicar el nombre del usuario y el ID del usuario
    * @param user: string - Nombre del usuario
@@ -154,19 +164,17 @@ yargs(hideBin(process.argv))
     command: 'read',
     describe: 'Lee un usuario de la colección',
     builder: {
-      user: { describe: 'Nombre del usuario', 
-      demandOption: true, 
-      type: 'string' },
-      id: { describe: 'ID del usuario', 
-      demandOption: true, 
-      type: 'number' }
+      user: { describe: 'Nombre del usuario', demandOption: true, type: 'string' },
+      id: { describe: 'ID del usuario', demandOption: true, type: 'number' }
     },
-    handler(argv) {
+    handler: argv => {
       const collection = new CardCollection(argv.user);
       collection.readCard(argv.id);
+      const data = JSON.stringify({ action: 'read', user: argv.user, cardID: argv.id, close: 'CLOSED' });
+      client.write(data);
     }
   })
-	/**
+  /**
    * Comando para eliminar un usuario de la colección
    * Por parámetros se deben indicar el nombre del usuario y el ID del usuario
    * @param user: string - Nombre del usuario
@@ -177,16 +185,14 @@ yargs(hideBin(process.argv))
     command: 'remove',
     describe: 'Elimina un usuario de la colección',
     builder: {
-      user: { describe: 'Nombre del usuario', 
-      demandOption: true, 
-      type: 'string' },
-      id: { describe: 'ID del usuario', 
-      demandOption: true, 
-      type: 'number' }
+      user: { describe: 'Nombre del usuario', demandOption: true, type: 'string' },
+      id: { describe: 'ID del usuario', demandOption: true, type: 'number' }
     },
-    handler(argv) {
+    handler: argv => {
       const collection = new CardCollection(argv.user);
       collection.removeCard(argv.id);
+      const data = JSON.stringify({ action: 'remove', user: argv.user, cardID: argv.id, close: 'CLOSED' });
+      client.write(data);
     }
   })
   // comandos de ayuda

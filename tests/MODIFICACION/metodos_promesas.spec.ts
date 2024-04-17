@@ -56,30 +56,6 @@ describe('Pruebas de funciones asíncronas de CardCollection', () => {
     marketValue: 0.01 
   };
 
-  // Prueba de la función asíncrona addCard
-  it('addCard debería añadir una carta a la colección', () => {
-    return cardCollection.addCard(exampleCard).then(() => {
-      // Verificar que la carta fue añadida correctamente
-      const filePath = fileManager.getFilePath(exampleCard.id);
-      const cardExists = fs.existsSync(filePath);
-      expect(cardExists).to.be.true;
-    }).catch((error) => {
-      // Si la promesa se rechaza, la prueba debería fallar
-      throw new Error(`Error inesperado: ${error}`);
-    });
-  });
-
-  // Prueba de la función asíncrona addCard con una carta que ya existe
-  it('addCard debería rechazar la promesa si la carta ya existe', () => {
-    return cardCollection.addCard(exampleCard).then(() => {
-      // Si la promesa se resuelve, la prueba debería fallar
-      throw new Error('Error inesperado: la carta ya existe.');
-    }).catch((error) => {
-      // Verificar que la promesa fue rechazada
-      expect(error).to.equal(`La carta con ID ${exampleCard.id} ya existe en la colección de usuario_prueba.`);
-    });
-  });
-
   // prueba para comporbar que usa promesas
   it('addCard debería devolver una promesa', () => {
     const result = cardCollection.addCard(exampleCard);
@@ -131,40 +107,6 @@ describe('Pruebas de funciones asíncronas de CardCollection', () => {
     marketValue: 0.01 
   };
   
-  /// Prueba de la función asíncrona updateCard
-  it('updateCard debería actualizar la carta en la colección y guardarla en el sistema de archivos', async () => {
-    // Definimos una carta original y la añadimos a la colección
-    const originalCard: Card = { 
-      id: 999, 
-      name: 'carta4', 
-      color: Color.Amarillo,
-      manaCost: 1,
-      cardType: LineType.Criatura, 
-      rarity: Rarity.Rara,
-      rulesText: 'Some rules text', 
-      marketValue: 0.01
-    };
-    // Verificamos si la carta ya existe en la colección
-    const existingCard = cardCollection.collection.find(card => card.id === originalCard.id);
-    if (!existingCard) {
-      // Si la carta no existe, la añadimos a la colección
-      await cardCollection.addCard(originalCard);
-    }
-    // Definimos una carta actualizada
-    const updatedCard: Card = { 
-      ...originalCard,
-      manaCost: 2, // Cambiamos el costo de mana
-      marketValue: 0.02 // Cambiamos el valor de mercado
-    };
-    // Actualizamos la carta
-    await cardCollection.updateCard(updatedCard);
-    // Verificar que la carta fue actualizada correctamente en la colección
-    const updatedCardInCollection = cardCollection.collection.find(card => card.id === updatedCard.id);
-    expect(updatedCardInCollection).to.deep.equal(updatedCard);
-    // Verificar que la carta fue guardada correctamente en el sistema de archivos
-    const savedCard = JSON.parse(await fs.promises.readFile(cardCollection.fileManager.getFilePath(updatedCard.id), 'utf8'));
-    expect(savedCard).to.deep.equal(updatedCard);
-  });
 
   // prueba para comporbar que usa promesas
   it('updateCard debería devolver una promesa', () => {

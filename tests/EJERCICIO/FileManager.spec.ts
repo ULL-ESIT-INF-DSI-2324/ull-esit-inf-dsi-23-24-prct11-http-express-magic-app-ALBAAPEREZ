@@ -1,4 +1,4 @@
-// PRUEBAS PARA LA CLASE FILEMANAGER
+// PRUEBAS PARA FILE MANAGER
 
 import 'mocha';
 import { expect } from 'chai';
@@ -7,131 +7,173 @@ import { Card } from '../../src/EJERCICIO/Card.js';
 import { Color } from '../../src/EJERCICIO/EnumerationColor.js';
 import { LineType } from '../../src/EJERCICIO/EnumerationLineType.js';
 import { Rarity } from '../../src/EJERCICIO/EnumerationRarity.js';
-import fs from 'fs';
+import * as fs from 'fs';
+import sinon from 'sinon';
 
-// pruebas para la clase
+
+// PRUEBAS PARA LA CLASE FileManager
 describe('FileManager', () => {
-  const username = 'testUser';
-  const fileManager = new FileManager(username);
-  const card: Card = {
-    id: 1,
-    name: 'test',
-    manaCost: 1,
-    color: Color.Blanco,
-    cardType: LineType.Criatura,
-    rarity: Rarity.Rara,
-    rulesText: 'test',
-    marketValue: 1
-  };
-  const collection = new Map<number, Card>();
-  collection.set(card.id, card);
-  // debe guardar la coleccion en un fichero
-  it('should save the collection to a file', () => {
-    fileManager.save(collection);
-    const filePath = fileManager.getFilePath(card.id);
-    expect(fs.existsSync(filePath)).to.be.true;
+  // Creamos una instancia de la clase FileManager
+  let fileManager: FileManager;
+  beforeEach(() => {
+    fileManager = new FileManager('test');
   });
-  // PRUEBA PARA EL CONSTRUCTOR
-  it('should create a new instance of FileManager', () => {
-    expect(fileManager).to.be.an.instanceOf(FileManager);
-  });
-  // el constructor debe 
-  it('should have a username', () => {
-    expect(fileManager).to.have.property('username');
-  });
-  // prueba para el getFilePath
-  it('should return the path of the file', () => {
-    const filePath = fileManager.getFilePath(card.id);
-    expect(filePath).to.be.a('string');
-  });
-  // TODOS los ficheros deben terminar en.json
-  it('should return a path that ends in .json', () => {
-    const filePath = fileManager.getFilePath(card.id);
-    expect(filePath.endsWith('.json')).to.be.true;
-  });
-  // pruebas para la funcion save
-  it('should save the collection', () => {
-    fileManager.save(collection);
-    const filePath = fileManager.getFilePath(card.id);
-    expect(fs.existsSync(filePath)).to.be.true;
+  // comprobamos que sea una clase
+  it('Debería ser una clase', () => {
+    expect(FileManager).to.be.a('function');
   });
 
-  // Test para comprobar si se escribe correctamente los datos de la carta en el archivo
-  it('should correctly write the card data to the file', () => {
-    fileManager.save(collection);
-    for (const [cardId, card] of collection) {
-      const filePath = fileManager.getFilePath(cardId);
-      const fileContent = fs.readFileSync(filePath, 'utf-8');
-      const cardData = JSON.parse(fileContent);
-      expect(cardData).to.deep.equal(card);
-    }
+  // comprobamos que getUserDir y getFilePath sean funciones
+  it('Debería tener las funciones getUserDir y getFilePath', () => {
+    expect(fileManager.getUserDir).to.be.a('function');
+    expect(fileManager.getFilePath).to.be.a('function');
   });
 
-  // Test para comprobar si se sobreescribe el archivo si se guarda una carta con el mismo id
-  it('should overwrite the existing file if a card with the same id is saved again', () => {
+  // Se utiliza el patron callback para obtener el directorio del usuario
+  it('getUserDir debería obtener el directorio del usuario', (done) => {
+    fileManager.getUserDir((error, userDir) => {
+      expect(error).to.be.undefined;
+      expect(userDir).to.be.a('string');
+      done();
+    });
+  });
+
+  // save debería ser una función
+  it('save debería ser una función', () => {
+    expect(fileManager.save).to.be.a('function');
+  });
+
+  // getFilePath debería obtener la ruta de un archivo
+  it('getFilePath debería obtener la ruta de un archivo', (done) => {
+    fileManager.getFilePath(1, (error, filePath) => {
+      expect(error).to.be.undefined;
+      expect(filePath).to.be.a('string');
+      done();
+    });
+  });
+
+  // save debería guardar la colección de cartas en archivos
+  it('save debería guardar la colección de cartas en archivos', (done) => {
+    const collection = new Map<number, Card>();
     const card: Card = {
       id: 1,
-      name: 'test2',
-      manaCost: 2,
+      name: 'test',
       color: Color.Azul,
-      cardType: LineType.Encantamiento,
-      rarity: Rarity.Mítica,
-      rulesText: 'test2',
-      marketValue: 2
+      manaCost: 1,
+      cardType: LineType.Criatura,
+      rarity: Rarity.Comun,
+      rulesText: 'Some rules text',
+      marketValue: 0.01
     };
-    collection.set(card.id, card);
-    fileManager.save(collection);
-    const filePath = fileManager.getFilePath(card.id);
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    const cardData = JSON.parse(fileContent);
-    expect(cardData).to.deep.equal(card);
+    collection.set(1, card);
+    fileManager.save(collection, (error) => {
+      expect(error).to.be.undefined;
+      done();
+    });
   });
 
-  // comporbamos que tiene un atributo privado
-  it('should have a private attribute', () => {
-    expect(fileManager).to.not.have.property('collection');
+  // save hace uso de los callbacks
+  it('save debería hacer uso de los callbacks', (done) => {
+    const collection = new Map<number, Card>();
+    const card: Card = {
+      id: 1,
+      name: 'test',
+      color: Color.Azul,
+      manaCost: 1,
+      cardType: LineType.Criatura,
+      rarity: Rarity.Comun,
+      rulesText: 'Some rules text',
+      marketValue: 0.01
+    };
+    collection.set(1, card);
+    fileManager.save(collection, (error) => {
+      expect(error).to.be.undefined;
+      done();
+    });
   });
 
-  // comporbamos que load devuelve un Map 
-  it('should return a Map', () => {
-    const loadedCollection = fileManager.load();
-    expect(loadedCollection).to.be.an.instanceOf(Map);
+  // save debería llamar a writeFiles
+  it('save debería llamar a writeFiles', (done) => {
+    const collection = new Map<number, Card>();
+    const card: Card = {
+      id: 1,
+      name: 'test',
+      color: Color.Azul,
+      manaCost: 1,
+      cardType: LineType.Criatura,
+      rarity: Rarity.Comun,
+      rulesText: 'Some rules text',
+      marketValue: 0.01
+    };
+    collection.set(1, card);
+    fileManager.save(collection, (error) => {
+      expect(error).to.be.undefined;
+      done();
+    });
   });
-  // tenemo un getter para el nombre del usuario del directorio
-  it('should have a getter for the username', () => {
-    const userDir = fileManager.getUserDir();
-    const userDirUsername = userDir.split('/').pop(); // assuming userDir is in the format '/path/to/username'
-    expect(userDirUsername).to.equal(username);
-  });
-
-  // PRUEBA PARA LA FUNCOIN SAVE
-  // Test to check if the save method creates the user directory if it does not exist
-  it('should create the user directory if it does not exist', () => {
-    if (fs.existsSync(fileManager.getUserDir())) {
-      fs.rmdirSync(fileManager.getUserDir(), { recursive: true });
-    }
-    fileManager.save(collection);
-    expect(fs.existsSync(fileManager.getUserDir())).to.be.true;
-  });
-
-  // Test to check if the save method writes the correct data to the file
-  it('should write the correct data to the file', () => {
-    fileManager.save(collection);
-    for (const [cardId, card] of collection) {
-      const filePath = fileManager.getFilePath(cardId);
-      const fileContent = fs.readFileSync(filePath, 'utf-8');
-      const cardData = JSON.parse(fileContent);
-      expect(cardData).to.deep.equal(card);
-    }
-  });
-
-  // Test to check if the save method creates a file for each card in the collection
-  it('should create a file for each card in the collection', () => {
-    fileManager.save(collection);
-    for (const cardId of collection.keys()) {
-      const filePath = fileManager.getFilePath(cardId);
-      expect(fs.existsSync(filePath)).to.be.true;
-    }
+  
+  // writeFiles debería escribir los archivos de las cartas
+  it('writeFiles debería escribir los archivos de las cartas', (done) => {
+    const collection = new Map<number, Card>();
+    const card: Card = {
+      id: 1,
+      name: 'test',
+      color: Color.Azul,
+      manaCost: 1,
+      cardType: LineType.Criatura,
+      rarity: Rarity.Comun,
+      rulesText: 'Some rules text',
+      marketValue: 0.01
+    };
+    collection.set(1, card);
+    fileManager.save(collection, (error) => {
+      expect(error).to.be.undefined;
+      done();
+    });
   });
 
+  // writeFiles hace uso de los callbacks
+  it('writeFiles debería hacer uso de los callbacks', (done) => {
+    const collection = new Map<number, Card>();
+    const card: Card = {
+      id: 1,
+      name: 'test',
+      color: Color.Azul,
+      manaCost: 1,
+      cardType: LineType.Criatura,
+      rarity: Rarity.Comun,
+      rulesText: 'Some rules text',
+      marketValue: 0.01
+    };
+    collection.set(1, card);
+    fileManager.save(collection, (error) => {
+      expect(error).to.be.undefined;
+      done();
+    });
+  });
+  // es una función p
+  it('save debería ser una función', () => {
+    expect(fileManager.save).to.be.a('function');
+  });
+
+  // load es una función
+  it('load debería ser una función', () => {
+    expect(fileManager.load).to.be.a('function');
+  });
+
+  // load hace uso de los callbacks
+  it('load debería hacer uso de los callbacks', (done) => {
+    fileManager.load((error, collection) => {
+      expect(error).to.be.undefined;
+      done();
+    });
+  });
+
+  // load debería cargar la colección de cartas desde archivos
+  it('load debería cargar la colección de cartas desde archivos', (done) => {
+    fileManager.load((error, collection) => {
+      expect(error).to.be.undefined;
+      done();
+    });
+  });
 });

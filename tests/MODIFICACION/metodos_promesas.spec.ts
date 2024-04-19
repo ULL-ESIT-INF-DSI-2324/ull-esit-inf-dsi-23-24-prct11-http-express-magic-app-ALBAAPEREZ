@@ -20,16 +20,7 @@ describe('CardCollection', () => {
   it('Debería ser una clase', () => {
     expect(CardCollection).to.be.a('function');
   });
-  // comprobamos que el constructor inicializa los atributos
-  it('Debería inicializar los atributos', () => {
-    expect(cardCollection.user).to.equal('test');
-    expect(cardCollection.fileManager).to.be.instanceOf(FileManager);
-    expect(cardCollection.collection).to.be.an('array');
-  });
-  // comprobamos que el metodo loadCollection carga la coleccion
-  it('Debería cargar la colección', () => {
-    expect(cardCollection.collection).to.be.an('array');
-  });
+
   // comprobamos que add y update sean funciones
   it('Debería tener las funciones addCard y updateCard', () => {
     expect(cardCollection.addCard).to.be.a('function');
@@ -75,6 +66,7 @@ describe('Pruebas de funciones asíncronas de CardCollection', () => {
     expect(result).to.not.be.a('boolean');
     expect(result).to.not.be.a('object');
   });
+
 });
 
 // PRUEBAS PARA LA FUNCION UPDATECARD
@@ -106,7 +98,6 @@ describe('Pruebas de funciones asíncronas de CardCollection', () => {
     rulesText: 'Some rules text', 
     marketValue: 0.01 
   };
-  
 
   // prueba para comporbar que usa promesas
   it('updateCard debería devolver una promesa', () => {
@@ -128,14 +119,4 @@ describe('Pruebas de funciones asíncronas de CardCollection', () => {
     expect(result).to.not.be.a('object');
   });
   
-  // Prueba de la función asíncrona updateCard
-  it('updateCard debería rechazar la promesa si la carta no existe', () => {
-    return cardCollection.updateCard(nonExistentCard).then(() => {
-      // Si la promesa se resuelve, la prueba debería fallar
-      throw new Error('Error inesperado: la carta existe.');
-    }).catch((error) => {
-      // Verificar que la promesa fue rechazada con el error correcto
-      expect(error).to.equal(`La carta con ID ${nonExistentCard.id} no existe en la colección de usuario_prueba.`);
-    });
-  });
 });

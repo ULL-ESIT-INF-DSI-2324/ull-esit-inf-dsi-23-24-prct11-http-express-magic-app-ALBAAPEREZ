@@ -1,213 +1,210 @@
 import chalk from 'chalk';
+import fs from 'fs';
+import path from 'path';
 import { Card } from './Card.js';
-import { FileManager } from './FileManager.js';
-import * as fs from 'fs';
-import * as path from 'path';
 
 /**
- * Clase para la colección de cartas
- * Esta clase se utiliza para gestionar la colección de cartas de un usuario
- * @param collection: Card[] - Colección de cartas
- * @param user: string - Nombre de usuario
- * @param fileManager: FileManager - Instancia de la clase FileManager
- * @param loadCollection: void - Cargar la colección de cartas
- * @param addCard: void - Añadir una carta a la colección
- * @param updateCard: void - Actualizar una carta de la colección
- * @param removeCard: void - Eliminar una carta de la colección
- * @param listCards: void - Listar las cartas de la colección
- * @param readCard: void - Leer la información de una carta
+ * Clase para la colección de cartas de un usuario
+ * Esta clase se utiliza para la gestión de la colección de cartas de un usuario
+ * Cada usuario tiene su propia colección de cartas
  */
 export class CardCollection {
-  /**
-   * Colección de cartas del usuario
-   * Es privado y solo se puede acceder desde la clase
-   */
+  // Colección de cartas
   private collection: Card[] = [];
-
-  /**
-   * Usuario propietario de la colección
-   * Es privado y solo se puede acceder desde la clase
-   */
+  // Nombre de usuario
   private user: string;
 
   /**
-   * Instancia de la clase FileManager
-   * Es privado y solo se puede acceder desde la clase
-   */
-  private fileManager: FileManager;
-
-  /**
    * Constructor de la clase CardCollection
-   * Se encarga de inicializar el usuario y la instancia de FileManager
-   * Luego carga la colección de cartas
+   * Se encarga de inicializar el nombre de usuario y cargar la colección de cartas
+   * @param user user: string - Nombre de usuario
    */
   constructor(user: string) {
     this.user = user;
-    this.fileManager = new FileManager(user);
-    this.loadCollection(); 
-  }
-
-  /**
-   * Método que retorna el color en formato hexadecimal.
-   * Suponemos que el gris es el color incoloro y el magenta es el multicolor.
-   * Si el color no se encuentra en el mapa de colores será negro.
-   * @param colorName nombre del color
-   * @returns retorna el color en formato hexadecimal
-   */
-  getColorCode(colorName: string): string {
-    const colorMap: { [key: string]: string } = {
-      blanco: '#FFFFFF',
-      azul: '#0000FF',
-      negro: '#000000',
-      rojo: '#FF0000',
-      verde: '#00FF00',
-      amarillo: '#FFFF00',
-      naranja: '#FFA500',
-      morado: '#800080',
-      rosa: '#FFC0CB',
-      marron: '#A52A2A',
-      incoloro: '#CCCCCC', 
-      multicolor: '#FF00FF'
-    };
-    return colorMap[colorName.toLowerCase()] || '#000000'; 
-  }
-    
-  /**
-   * Metodo que se encarga de cargar la collecion
-   * desde los ficheros.
-   */
-  private loadCollection(): void {
-    this.collection = Array.from(this.fileManager.load().values());
-  }
-
-  /**
-   * Método para añadir una carta a la colección
-   * Este método añade una nueva carta a la colección del usuario. Si la carta ya existe en la colección,
-   * se muestra un mensaje de error. Si la carta no existe, se añade a la colección y se guarda en el sistema de archivos.
-   * @param card La carta que se va a añadir a la colección.
-   * @returns void no devuelve nada
-   */
-  public addCard(card: Card): void {
-    // Si ya existe en la coleccion
-    if (this.collection.some(c => c.id === card.id)) {
-      console.log(chalk.red.bold(`La carta con ID ${card.id} ya existe en la colección de ${this.user}.`));
-    } else {
-      // si no existe la añadimos
-      this.collection.push(card);
-      const filePath = this.fileManager.getFilePath(card.id);
-      // si no existe el directorio lo creamos
-      if (!fs.existsSync(path.dirname(filePath))) {
-        fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    // Cargar la colección de cartas
+    this.loadCollection((error) => {
+      if (error) {
+        console.log(chalk.red.bold(`Error al cargar la colección de ${this.user}: ${error}`));
       }
-      // guardamos la carta en el sistema de archivos
-      fs.writeFileSync(filePath, JSON.stringify(card, null, 2));
-      console.log(chalk.green.bold(`Nueva carta añadida a la colección de ${this.user}.`));
-    }
-  }
-
-  /**
-   * Método para actualizar una carta en la colección
-   * Este método actualiza una carta en la colección del usuario. Si la carta no existe en la colección,
-   * se muestra un mensaje de error. Si la carta existe, se actualiza en la colección y se guarda en el sistema de archivos.
-   * @param updatedCard La carta actualizada que se va a añadir a la colección.
-   * @returns void no devuelve nada
-   */
-  public updateCard(updatedCard: Card): void {
-    const cardIndex = this.collection.findIndex(c => c.id === updatedCard.id);
-    if (cardIndex === -1) {
-      console.log(chalk.red.bold(`La carta con ID ${updatedCard.id} no existe en la colección de ${this.user}.`));
-    } else {
-      this.collection[cardIndex] = updatedCard;
-      fs.writeFileSync(this.fileManager.getFilePath(updatedCard.id), JSON.stringify(updatedCard, null, 2));
-      console.log(chalk.green.bold(`Carta actualizada en la colección de ${this.user}.`));
-    }
-  }
-
-  /**
-   * Método para eliminar una carta de la colección
-   * Este método elimina una carta de la colección del usuario. Si la carta no existe en la colección,
-   * se muestra un mensaje de error. Si la carta existe, se elimina de la colección y 
-   * se borra del sistema de archivos. 
-   * @param id El identificador de la carta que se va a eliminar de la colección.
-   * @returns void no devuelve nada
-   */
-  public removeCard(id: number): void {
-    // Buscamos la carta en la coleccion
-    const cardIndex = this.collection.findIndex(c => c.id === id);
-    // Si no existe mostramos un mensaje de error
-    if (cardIndex === -1) {
-      console.log(chalk.red.bold(`La carta con ID ${id} no existe en la colección de ${this.user}.`));
-    } else {
-      // Si existe la eliminamos
-      this.collection.splice(cardIndex, 1);
-      const filePath = this.fileManager.getFilePath(id);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-        console.log(chalk.green.bold(`Carta eliminada de la colección de ${this.user}.`));
-      } else {
-        console.log(chalk.red.bold(`El archivo de la carta con ID ${id} no existe.`));
-      }
-    }
-  }
-
-  /**
-   * Método para listar las cartas de la colección
-   * Este método muestra por consola la información de todas las cartas de la colección del usuario.
-   * Muestra cada uno de los atributos de la carta, como el nombre, el coste de mana, el color, 
-   * el tipo de carta, etc. Aqui hacemos uso del metodo para obtener el color en hexadecimal.
-   * @returns void no devuelve nada
-   */
-  public listCards(): void {
-    console.log(chalk.bold(`\nColección de cartas de ${this.user}\n`));
-    this.collection.forEach(card => {
-      const colorCode = this.getColorCode(card.color);
-      console.log(chalk.bold.italic(chalk.white(`ID: ${card.id}`)));
-      console.log(chalk.bold.italic(chalk.cyan(`Nombre: ${card.name}`)));
-      console.log(chalk.bold.italic(`Coste de Mana: ${card.manaCost}`));
-      console.log(chalk.bold.italic(`Color: ${chalk.hex(colorCode)(card.color)}`));
-      console.log(chalk.bold.italic(`Tipo de Línea: ${card.cardType}`));
-      console.log(chalk.bold.italic(`Rareza: ${card.rarity}`));
-      console.log(chalk.bold.italic(`Texto de Reglas: ${card.rulesText}`));
-      if (card.cardType === 'Criatura' && card.power && card.toughness) {
-        console.log(chalk.bold.italic(`Fuerza/Resistencia: ${card.power}/${card.toughness}`));
-      }
-      if (card.loyalty && card.cardType === 'Planeswalker') {
-        console.log(chalk.bold.italic(`Marcas de Lealtad: ${card.loyalty}`));
-      }
-      console.log(chalk.bold.italic(`Valor de Mercado: ${card.marketValue}`));
-      console.log("");
     });
   }
 
   /**
-   * Método para leer la información de una carta
-   * Este método muestra por consola la información de una carta de la colección del usuario.
-   * Muestra cada uno de los atributos de la carta, como el nombre, el coste de mana, el color,
-   * el tipo de carta, etc. Aqui hacemos uso del metodo para obtener el color en hexadecimal.
-   * Si la carta no existe en la colección, se muestra un mensaje de error.
-   * @param id El identificador de la carta que se va a leer.
-   * @returns void no devuelve nada
+   * Método para cargar la colección de cartas
+   * Lo que hace es leer los archivos de las cartas y guardarlas en la colección
+   * Si hay un error al cargar la colección, se llama al callback con el error correspondiente
+   * Utiliza la función fs.readdir para leer los archivos de las cartas
+   * Carga las cartas desde archivos y las guarda en la colección
+   * @param callback callback: (error: string | undefined) => void - Callback que se llama al finalizar la operación
    */
-  public readCard(id: number): void {
-    const card = this.collection.find(c => c.id === id);
-    if (!card) {
-      console.log(chalk.red.bold(`La carta con ID ${id} no existe en la colección de ${this.user}.`));
-    } else {
-      const colorCode = this.getColorCode(card.color);
-      console.log(chalk.bold.italic(`\nInformación de la carta con ID ${id}\n`));
-      console.log(chalk.bold.italic(chalk.cyan(`Nombre: ${card.name}`)));
-      console.log(chalk.bold.italic(`Coste de Mana: ${card.manaCost}`));
-      console.log(chalk.bold.italic(`Color: ${chalk.hex(colorCode)(card.color)}`));
-      console.log(chalk.bold.italic(`Tipo de Carta: ${card.cardType}`));
-      console.log(chalk.bold.italic(`Rareza: ${card.rarity}`));
-      console.log(chalk.bold.italic(`Texto de Reglas: ${card.rulesText}`));
-      if (card.cardType === 'Criatura' && card.power && card.toughness) {
-        console.log(chalk.bold.italic(`Fuerza/Resistencia: ${card.power}/${card.toughness}`));
+  private loadCollection(callback: (error: string | undefined) => void): void {
+    const directoryPath = `./cards/${this.user}`;
+    // Leer los archivos de las cartas
+    fs.readdir(directoryPath, (err, files) => {
+      if (err) {
+        callback(`Error al leer el directorio de la colección de ${this.user}: ${err}`);
+      } else {
+        const cardFiles = files.filter((file) => path.extname(file) === '.json');
+        const fileReadPromises: Promise<void>[] = [];
+        // Leer cada archivo y añadir la carta a la colección
+        cardFiles.forEach((file) => {
+          const filePath = path.join(directoryPath, file);
+          const readFilePromise = new Promise<void>((resolve, reject) => {
+            // Leer el archivo de la carta
+            fs.readFile(filePath, 'utf8', (err, data) => {
+              if (err) {
+                reject(`Error al leer el archivo ${file}: ${err}`);
+              } else {
+                // Analizar los datos del archivo
+                try {
+                  const cardData = JSON.parse(data);
+                  const card: Card = cardData;
+                  this.collection.push(card);
+                  resolve();
+                } catch (parseError) {
+                  reject(`Error al analizar el archivo ${file}: ${parseError}`);
+                }
+              }
+            });
+          });
+          fileReadPromises.push(readFilePromise);
+        });
+        // Esperar a que se lean todos los archivos
+        Promise.all(fileReadPromises)
+          .then(() => callback(undefined))
+          .catch((error) => callback(error));
       }
-      if (card.loyalty && card.cardType === 'Planeswalker') {
-        console.log(chalk.bold.italic(`Marcas de Lealtad: ${card.loyalty}`));
-      }
-      console.log(chalk.bold.italic(`Valor de Mercado: ${card.marketValue}`));
-    }
+    });
   }
+
+  /**
+   * Método para añadir una carta a la colección
+   * Añade la carta a la colección y la guarda en un archivo
+   * Si hay un error al añadir la carta, se llama al callback con el error correspondiente
+   * Utiliza la función fs.writeFile para guardar la carta en un archivo
+   * @param card card: Card - Carta a añadir a la colección
+   * @param callback callback: (error: string | undefined) => void - Callback que se llama al finalizar la operación
+   */
+  public addCard(card: Card, callback: (error: string | undefined) => void): void {
+    const cardFilePath = `./cards/${this.user}/${card.id}.json`;
+    // Comprobar si la carta ya existe en la colección
+    fs.stat(cardFilePath, (err) => {
+      if (err) {
+        // Si no existe, se añade a la colección y se guarda en un archivo
+        fs.writeFile(cardFilePath, JSON.stringify(card), (err) => {
+          if (err) {
+            callback(err.message);
+          } else {
+            callback(undefined);
+          }
+        });
+      } else {
+        callback(`La carta con ID ${card.id} ya existe en la colección de ${this.user}.`);
+      }
+    });
+  }
+
+  /**
+   * Método para actualizar una carta en la colección
+   * Lo que hace es actualizar la información de la carta y guardarla en un archivo
+   * Si hay un error al actualizar la carta, se llama al callback con el error correspondiente
+   * Utiliza la función fs.writeFile para guardar la carta en un archivo
+   * @param card card: Card - Carta con los datos actualizados
+   * @param callback callback: (error: string | undefined) => void - Callback que se llama al finalizar la operación
+   */
+  public updateCard(card: Card, callback: (error: string | undefined) => void): void {
+    const cardFilePath = `./cards/${this.user}/${card.id}.json`;
+    // Comprobar si la carta existe en la colección
+    fs.stat(cardFilePath, (err) => {
+      if (err) {
+        callback(`La carta con ID ${card.id} no existe en la colección de ${this.user}.`);
+      } else {
+        // Si existe, se actualiza y se guarda en un archivo
+        fs.writeFile(cardFilePath, JSON.stringify(card), (err) => {
+          if (err) {
+            callback(err.message);
+          } else {
+            callback(undefined);
+          }
+        });
+      }
+    });
+  }
+
+  /**
+  * Método para eliminar una carta de la colección
+  * Lo que hace es eliminar el archivo de la carta mediante el ID
+  * Si hay un error al eliminar el archivo, se llama al callback con el error correspondiente
+  * Utiliza la función fs.unlink para eliminar el archivo
+  * @param cardID cardID: number - ID de la carta a eliminar
+  * @param callback callback: (error: string | undefined) => void - Callback que se llama al finalizar la operación
+  */
+  public removeCard(cardID: number, callback: (error: string | undefined) => void): void {
+    const cardFilePath = `./cards/${this.user}/${cardID}.json`;
+    // Comprobar si la carta existe en la colección
+    fs.unlink(cardFilePath, (err) => {
+      if (err) {
+        callback(`Error al eliminar la carta con ID ${cardID} de la colección de ${this.user}: ${err}`);
+      } else {
+        callback(undefined);
+      }
+    });
+  }
+
+  /**
+   * Método para listar las cartas de la colección
+   * Lo que hace es leer los archivos de las cartas y devolver la información de cada una
+   * Devuelve un string con la información de cada carta, separada por saltos de línea
+   * @param callback callback: (error: string | undefined, result?: string) => void - Callback que se llama al finalizar la operación
+   */
+  public listCards(callback: (error: string | undefined, result?: string) => void): void {
+    const directoryPath = `./cards/${this.user}`;
+    // Leer los archivos de las cartas
+    fs.readdir(directoryPath, (err, files) => {
+      if (err) {
+        callback(`Error al leer el directorio de la colección de ${this.user}: ${err}`);
+      } else {
+        //SI no hay error, se filtran los archivos con extensión .json
+        const cardFiles = files.filter((file) => path.extname(file) === '.json');
+        const cardsInfo: string[] = [];
+        // Se recorre cada archivo y se añade la información al array cardsInfo
+        cardFiles.forEach((file, index) => {
+          const cardFilePath = path.join(directoryPath, file);
+          const cardInfo = `Carta ${index + 1}: ${cardFilePath}`;
+          cardsInfo.push(cardInfo);
+        });
+        // Se devuelve la información de las cartas
+        const result = cardsInfo.join('\n');
+        callback(undefined, result);
+      }
+    });
+  }
+
+  /**
+   * Método para leer una carta de la colección
+   * Lo que hace es leer el archivo de la carta mediante el ID y devolver la información
+   * Si hay un error al leer el archivo, se llama al callback con el error correspondiente
+   * Si no hay error, se devuelve la información de la carta
+   * Utiliza la función fs.readFile para leer el archivo
+   * @param cardID cardID: number - ID de la carta a leer
+   * @param callback callback: (error: string | undefined, result?: Card) => void - Callback que se llama al finalizar la operación
+   */
+  public readCard(cardID: number, callback: (error: string | undefined, result?: Card) => void): void {
+    const cardFilePath = `./cards/${this.user}/${cardID}.json`;
+    // Leer el archivo de la carta
+    fs.readFile(cardFilePath, 'utf8', (err, data) => {
+      if (err) {
+        callback(`Error al leer la carta con ID ${cardID} de la colección de ${this.user}: ${err}`);
+      } else {
+        try {
+          const cardData = JSON.parse(data);
+          const card: Card = cardData;
+          callback(undefined, card);
+        } catch (parseError) {
+          callback(`Error al analizar la carta con ID ${cardID} de la colección de ${this.user}: ${parseError}`);
+        }
+      }
+    });
+  }
+
 }

@@ -25,8 +25,7 @@
 9. [Yargs y Chalk](#9-yargs-y-chalk)
 10. [API sincrona de Node.js](#10-api-sincrona-de-nodejs)
 11. [Ejercicio](#11-ejercicio)
-12. [Modificación](#12-modificación)
-13. [Conclusiones](#9-conclusiones)
+12. [Conclusiones](#9-conclusiones)
 
 ---
 

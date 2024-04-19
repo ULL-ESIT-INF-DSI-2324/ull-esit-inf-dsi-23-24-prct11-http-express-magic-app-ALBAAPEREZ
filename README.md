@@ -27,6 +27,17 @@
 11. [Ejercicio](#11-ejercicio)
 12. [Conclusiones](#9-conclusiones)
 
+
+[![Coveralls](https://github.com/ULL-ESIT-INF-DSI-2324/ull-esit-inf-dsi-23-24-prct11-http-express-magic-app-ALBAAPEREZ/actions/workflows/coveralls.yml/badge.svg)](https://github.com/ULL-ESIT-INF-DSI-2324/ull-esit-inf-dsi-23-24-prct11-http-express-magic-app-ALBAAPEREZ/actions/workflows/coveralls.yml)
+
+
+[![pages-build-deployment](https://github.com/ULL-ESIT-INF-DSI-2324/ull-esit-inf-dsi-23-24-prct11-http-express-magic-app-ALBAAPEREZ/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/ULL-ESIT-INF-DSI-2324/ull-esit-inf-dsi-23-24-prct11-http-express-magic-app-ALBAAPEREZ/actions/workflows/pages/pages-build-deployment)
+
+[![Tests](https://github.com/ULL-ESIT-INF-DSI-2324/ull-esit-inf-dsi-23-24-prct11-http-express-magic-app-ALBAAPEREZ/actions/workflows/node.js.yml/badge.svg)](https://github.com/ULL-ESIT-INF-DSI-2324/ull-esit-inf-dsi-23-24-prct11-http-express-magic-app-ALBAAPEREZ/actions/workflows/node.js.yml)
+
+
+[![Build](https://github.com/ULL-ESIT-INF-DSI-2324/ull-esit-inf-dsi-23-24-prct11-http-express-magic-app-ALBAAPEREZ/actions/workflows/sonarcloud.yml/badge.svg)](https://github.com/ULL-ESIT-INF-DSI-2324/ull-esit-inf-dsi-23-24-prct11-http-express-magic-app-ALBAAPEREZ/actions/workflows/sonarcloud.yml)
+
 ---
 
 # 1. Introducción.
